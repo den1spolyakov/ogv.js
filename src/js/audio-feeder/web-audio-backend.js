@@ -7,8 +7,8 @@
 
 var AudioContext = window.AudioContext || window.webkitAudioContext;
 
-import {BufferQueue} from './buffer-queue.js';
-import {nextTick} from './next-tick-browser.js';
+import { BufferQueue } from './buffer-queue.js';
+import { nextTick } from './next-tick-browser.js';
 
 /**
  * Constructor for AudioFeeder's Web Audio API backend.
@@ -53,7 +53,7 @@ export function WebAudioBackend(numChannels, sampleRate, options) {
 	this.channels = 2; // @fixme remove this limit
 
 	if (options.bufferSize) {
-			this.bufferSize = (options.bufferSize | 0);
+		this.bufferSize = (options.bufferSize | 0);
 	}
 	this.bufferThreshold = 2 * this.bufferSize;
 
@@ -140,7 +140,7 @@ Object.defineProperty(WebAudioBackend.prototype, 'muted', {
  * @param {AudioProcessingEvent} event - audio processing event object
  * @access private
  */
-WebAudioBackend.prototype._audioProcess = function(event) {
+WebAudioBackend.prototype._audioProcess = function (event) {
 	var channel, input, output, i, playbackTime;
 	if (typeof event.playbackTime === 'number') {
 		playbackTime = event.playbackTime;
@@ -217,7 +217,7 @@ WebAudioBackend.prototype._audioProcess = function(event) {
  * @returns {number} - sample count
  * @access private
  */
-WebAudioBackend.prototype._samplesQueued = function() {
+WebAudioBackend.prototype._samplesQueued = function () {
 	var bufferedSamples = this._bufferQueue.sampleCount();
 	var remainingSamples = Math.floor(this._timeAwaitingPlayback() * this.rate);
 
@@ -230,7 +230,7 @@ WebAudioBackend.prototype._samplesQueued = function() {
  *
  * @returns {number} - seconds
  */
-WebAudioBackend.prototype._timeAwaitingPlayback = function() {
+WebAudioBackend.prototype._timeAwaitingPlayback = function () {
 	return Math.max(0, this._playbackTimeAtBufferTail - this._context.currentTime);
 };
 
@@ -239,7 +239,7 @@ WebAudioBackend.prototype._timeAwaitingPlayback = function() {
  *
  * @return {PlaybackState} - info about current playback state
  */
-WebAudioBackend.prototype.getPlaybackState = function() {
+WebAudioBackend.prototype.getPlaybackState = function () {
 	return {
 		playbackPosition: this._queuedTime - this._timeAwaitingPlayback(),
 		samplesQueued: this._samplesQueued(),
@@ -256,7 +256,7 @@ WebAudioBackend.prototype.getPlaybackState = function() {
  *
  * @param {function} callback - to be called when ready
  */
-WebAudioBackend.prototype.waitUntilReady = function(callback) {
+WebAudioBackend.prototype.waitUntilReady = function (callback) {
 	callback();
 };
 
@@ -268,7 +268,7 @@ WebAudioBackend.prototype.waitUntilReady = function(callback) {
  *
  * @param {SampleBuffer} sampleData - audio data at target sample rate
  */
-WebAudioBackend.prototype.appendBuffer = function(sampleData) {
+WebAudioBackend.prototype.appendBuffer = function (sampleData) {
 	this._bufferQueue.appendBuffer(sampleData);
 };
 
@@ -278,7 +278,7 @@ WebAudioBackend.prototype.appendBuffer = function(sampleData) {
  * Audio should have already been queued at this point,
  * or starvation may occur immediately.
  */
-WebAudioBackend.prototype.start = function() {
+WebAudioBackend.prototype.start = function () {
 	this._node.onaudioprocess = this._audioProcess.bind(this);
 	this._node.connect(this.output);
 	this._playbackTimeAtBufferTail = this._context.currentTime;
@@ -288,7 +288,7 @@ WebAudioBackend.prototype.start = function() {
  * Stop playback, but don't release resources or clear the buffers.
  * We'll probably come back soon.
  */
-WebAudioBackend.prototype.stop = function() {
+WebAudioBackend.prototype.stop = function () {
 	if (this._node) {
 		var timeRemaining = this._timeAwaitingPlayback();
 		if (timeRemaining > 0) {
@@ -296,12 +296,9 @@ WebAudioBackend.prototype.stop = function() {
 			// Unshift them back onto the beginning of the buffer.
 			// @todo make this not a horrible hack
 			var samplesRemaining = Math.round(timeRemaining * this.rate),
-					samplesAvailable = this._liveBuffer ? this._liveBuffer[0].length : 0;
+				samplesAvailable = this._liveBuffer ? this._liveBuffer[0].length : 0;
 			if (samplesRemaining > samplesAvailable) {
-				//console.log('liveBuffer size ' + samplesRemaining + ' vs ' + samplesAvailable);
-				this._bufferQueue.prependBuffer(this._liveBuffer);
-				this._bufferQueue.prependBuffer(
-					this._bufferQueue.createBuffer(samplesRemaining - samplesAvailable));
+				// noop
 			} else {
 				this._bufferQueue.prependBuffer(
 					this._bufferQueue.trimBuffer(this._liveBuffer, samplesAvailable - samplesRemaining, samplesRemaining));
@@ -316,7 +313,7 @@ WebAudioBackend.prototype.stop = function() {
 /**
  * Flush any queued data out of the system.
  */
-WebAudioBackend.prototype.flush = function() {
+WebAudioBackend.prototype.flush = function () {
 	this._bufferQueue.flush();
 };
 
@@ -325,7 +322,7 @@ WebAudioBackend.prototype.flush = function() {
  *
  * @todo consider releasing the AudioContext when possible
  */
-WebAudioBackend.prototype.close = function() {
+WebAudioBackend.prototype.close = function () {
 	this.stop();
 
 	this._context = null;
@@ -354,7 +351,7 @@ WebAudioBackend.prototype.onbufferlow = null;
  *
  * @returns {boolean} - true if this browser appears to support Web Audio API
  */
-WebAudioBackend.isSupported = function() {
+WebAudioBackend.isSupported = function () {
 	return !!AudioContext;
 };
 
@@ -376,7 +373,7 @@ WebAudioBackend.sharedAudioContext = null;
  *
  * @returns {AudioContext|null} - initialized AudioContext instance, if applicable
  */
-WebAudioBackend.initSharedAudioContext = function() {
+WebAudioBackend.initSharedAudioContext = function () {
 	if (!WebAudioBackend.sharedAudioContext) {
 		if (WebAudioBackend.isSupported()) {
 			// We're only allowed 4 contexts on many browsers
@@ -388,7 +385,7 @@ WebAudioBackend.initSharedAudioContext = function() {
 			} else if (context.createJavaScriptNode) {
 				node = context.createJavaScriptNode(1024, 0, 2);
 			} else {
-				throw new Error( "Bad version of web audio API?" );
+				throw new Error("Bad version of web audio API?");
 			}
 
 			// Don't actually run any audio, just start & stop the node
